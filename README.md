@@ -122,6 +122,38 @@ plt.tight_layout()
 plt.show()
 ```
 
+## Strike Zone (v0.2.0)
+
+### `draw_strike_zone(ax, sz_top=3.5, sz_bot=1.5, color="black", lw=2)`
+
+Draw a strike zone rectangle on a matplotlib `Axes` (plate_x / plate_z coordinate system).
+
+```python
+from baseball_field_viz import draw_strike_zone
+
+fig, ax = plt.subplots(figsize=(6, 6))
+draw_strike_zone(ax, sz_top=3.5, sz_bot=1.5)
+```
+
+### `pitch_zone_chart(ax, df, color_by="pitch_type", sz_top=None, sz_bot=None, title=None)`
+
+Plot pitch locations with strike zone overlay. Uses `plate_x` / `plate_z` columns (Statcast standard).
+If `sz_top`/`sz_bot` are not provided, the mean of `df["sz_top"]`/`df["sz_bot"]` is used automatically.
+
+```python
+from pybaseball import statcast
+from baseball_field_viz import pitch_zone_chart
+
+df = statcast(start_dt="2025-03-01", end_dt="2025-10-31")
+df_pitcher = df[df["pitcher"] == 592789]  # e.g. Yoshinobu Yamamoto
+
+fig, ax = plt.subplots(figsize=(6, 6))
+pitch_zone_chart(ax, df_pitcher, color_by="pitch_type", title="Yamamoto 2025 - Pitch Locations")
+plt.show()
+```
+
+The strike zone is automatically sized from per-pitch Hawk-Eye measurements (`sz_top`/`sz_bot`) in the Statcast data, reflecting each batter's actual stance.
+
 ## Requirements
 
 - Python 3.9+
