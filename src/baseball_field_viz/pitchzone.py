@@ -1,5 +1,4 @@
 import matplotlib.patches as mpatches
-import matplotlib.pyplot as plt
 
 # Home plate width: 17 inches = 17/12 feet
 _PLATE_HALF_WIDTH = 17 / 12 / 2  # ~0.7083 ft
@@ -39,7 +38,9 @@ def draw_strike_zone(ax, sz_top=3.5, sz_bot=1.5, color="black", lw=2):
 
 
 def pitch_zone_chart(ax, df, color_by="pitch_type", sz_top=None, sz_bot=None, title=None):
-    """Plot pitch locations (plate_x / plate_z) with strike zone overlay.
+    """Plot pitch location density (plate_x / plate_z) with strike zone overlay.
+
+    Uses seaborn kdeplot (filled contours) by default for density visualization.
 
     Parameters
     ----------
@@ -50,7 +51,7 @@ def pitch_zone_chart(ax, df, color_by="pitch_type", sz_top=None, sz_bot=None, ti
         If sz_top/sz_bot are None, uses mean of 'sz_top'/'sz_bot' columns
         if present, otherwise defaults to 3.5/1.5.
     color_by : str
-        Column name used for coloring. Default "pitch_type".
+        Column name used for hue in kdeplot. Default "pitch_type".
     sz_top : float or None
         Override strike zone top. If None, inferred from df.
     sz_bot : float or None
@@ -58,11 +59,7 @@ def pitch_zone_chart(ax, df, color_by="pitch_type", sz_top=None, sz_bot=None, ti
     title : str or None
         Axes title.
     """
-    _DEFAULT_COLORS = [
-        "#e41a1c", "#377eb8", "#4daf4a", "#984ea3",
-        "#ff7f00", "#a65628", "#f781bf", "#999999",
-        "#66c2a5", "#fc8d62",
-    ]
+    import seaborn as sns
 
     df = df.dropna(subset=["plate_x", "plate_z"])
 
@@ -74,16 +71,12 @@ def pitch_zone_chart(ax, df, color_by="pitch_type", sz_top=None, sz_bot=None, ti
 
     draw_strike_zone(ax, sz_top=sz_top, sz_bot=sz_bot)
 
-    if color_by in df.columns:
-        categories = df[color_by].dropna().unique()
-        color_map = {cat: _DEFAULT_COLORS[i % len(_DEFAULT_COLORS)] for i, cat in enumerate(sorted(categories))}
-        for cat, color in color_map.items():
-            subset = df[df[color_by] == cat]
-            ax.scatter(subset["plate_x"], subset["plate_z"],
-                       c=color, label=str(cat), alpha=0.6, s=20)
-        ax.legend(loc="upper right", fontsize=8, title=color_by)
-    else:
-        ax.scatter(df["plate_x"], df["plate_z"], alpha=0.6, s=20)
+    hue = color_by if color_by in df.columns else None
+    sns.kdeplot(
+        data=df, x="plate_x", y="plate_z", ax=ax,
+        hue=hue,
+        fill=True, alpha=0.5, levels=8,
+    )
 
     ax.set_xlim(-2.5, 2.5)
     ax.set_ylim(0, 5.5)
