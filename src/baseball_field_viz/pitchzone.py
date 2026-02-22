@@ -69,14 +69,17 @@ def pitch_zone_chart(ax, df, color_by="pitch_type", sz_top=None, sz_bot=None, ti
     if sz_bot is None:
         sz_bot = df["sz_bot"].mean() if "sz_bot" in df.columns and df["sz_bot"].notna().any() else 1.5
 
-    draw_strike_zone(ax, sz_top=sz_top, sz_bot=sz_bot)
-
     hue = color_by if color_by in df.columns else None
     sns.kdeplot(
         data=df, x="plate_x", y="plate_z", ax=ax,
         hue=hue,
-        fill=True, alpha=0.5, levels=8,
+        fill=True, alpha=0.4, levels=6,
+        clip=((-2.0, 2.0), (0.3, 5.2)),
+        thresh=0.05,
     )
+
+    # Draw strike zone on top of density so it stays visible
+    draw_strike_zone(ax, sz_top=sz_top, sz_bot=sz_bot)
 
     ax.set_xlim(-2.5, 2.5)
     ax.set_ylim(0, 5.5)
