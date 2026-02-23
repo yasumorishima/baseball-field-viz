@@ -3,12 +3,6 @@ import matplotlib.patches as mpatches
 # Home plate width: 17 inches = 17/12 feet
 _PLATE_HALF_WIDTH = 17 / 12 / 2  # ~0.7083 ft
 
-_DEFAULT_COLORS = [
-    "#e41a1c", "#377eb8", "#4daf4a", "#984ea3",
-    "#ff7f00", "#a65628", "#f781bf", "#999999",
-    "#66c2a5", "#fc8d62",
-]
-
 
 def draw_strike_zone(ax, sz_top=3.5, sz_bot=1.5, color="black", lw=2):
     """Draw a strike zone rectangle on a matplotlib Axes.
@@ -44,15 +38,11 @@ def draw_strike_zone(ax, sz_top=3.5, sz_bot=1.5, color="black", lw=2):
     return ax
 
 
-def pitch_zone_chart(ax, df, color_by="pitch_type", sz_top=None, sz_bot=None, title=None):
-    """Plot pitch locations (plate_x / plate_z) with strike zone overlay.
+def pitch_zone_chart(ax, df, sz_top=None, sz_bot=None, title=None):
+    """Plot pitch location density with strike zone overlay.
 
-    When color_by column is present:
-      - Gray background kdeplot shows overall pitch density
-      - Scatter overlay shows each pitch type in a distinct color
-
-    When color_by is absent:
-      - kdeplot density only
+    Pass a pre-filtered DataFrame for one pitch type (or any subset).
+    For multi-type comparison, call this in a loop — one subplot per type.
 
     Parameters
     ----------
@@ -62,51 +52,36 @@ def pitch_zone_chart(ax, df, color_by="pitch_type", sz_top=None, sz_bot=None, ti
         Must contain 'plate_x' and 'plate_z' columns (Statcast standard).
         If sz_top/sz_bot are None, uses mean of 'sz_top'/'sz_bot' columns
         if present, otherwise defaults to 3.5/1.5.
-    color_by : str
-        Column name used for scatter coloring. Default "pitch_type".
     sz_top : float or None
         Override strike zone top. If None, inferred from df.
     sz_bot : float or None
         Override strike zone bottom. If None, inferred from df.
     title : str or None
         Axes title.
+
+    Example
+    -------
+    >>> pitch_types = df['pitch_type'].value_counts().index
+    >>> fig, axs = plt.subplots(1, len(pitch_types), figsize=(5*len(pitch_types), 5))
+    >>> for ax, pt in zip(axs, pitch_types):
+    ...     pitch_zone_chart(ax, df[df['pitch_type'] == pt], title=pt)
     """
     import seaborn as sns
 
     df = df.dropna(subset=["plate_x", "plate_z"])
 
-    # Resolve strike zone bounds
     if sz_top is None:
         sz_top = df["sz_top"].mean() if "sz_top" in df.columns and df["sz_top"].notna().any() else 3.5
     if sz_bot is None:
         sz_bot = df["sz_bot"].mean() if "sz_bot" in df.columns and df["sz_bot"].notna().any() else 1.5
 
-    _clip = ((-2.0, 2.0), (0.3, 5.2))
+    sns.kdeplot(
+        data=df, x="plate_x", y="plate_z", ax=ax,
+        fill=True, alpha=0.6, levels=6,
+        clip=((-2.0, 2.0), (0.3, 5.2)),
+        thresh=0.05,
+    )
 
-    if color_by in df.columns:
-        # Background: overall density in gray
-        sns.kdeplot(
-            data=df, x="plate_x", y="plate_z", ax=ax,
-            fill=True, alpha=0.2, color="gray", levels=5,
-            clip=_clip, thresh=0.05,
-        )
-        # Foreground: scatter per pitch type
-        categories = sorted(df[color_by].dropna().unique())
-        color_map = {cat: _DEFAULT_COLORS[i % len(_DEFAULT_COLORS)]
-                     for i, cat in enumerate(categories)}
-        for cat, color in color_map.items():
-            subset = df[df[color_by] == cat]
-            ax.scatter(subset["plate_x"], subset["plate_z"],
-                       c=color, label=str(cat), alpha=0.5, s=15, zorder=3)
-        ax.legend(loc="upper right", fontsize=8, title=color_by)
-    else:
-        sns.kdeplot(
-            data=df, x="plate_x", y="plate_z", ax=ax,
-            fill=True, alpha=0.5, levels=6,
-            clip=_clip, thresh=0.05,
-        )
-
-    # Strike zone on top of everything
     draw_strike_zone(ax, sz_top=sz_top, sz_bot=sz_bot)
 
     ax.set_xlim(-2.5, 2.5)
