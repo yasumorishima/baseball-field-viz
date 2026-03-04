@@ -39,15 +39,15 @@ plt.show()
 
 ### `transform_coords(df)`
 
-Convert Statcast `hc_x`/`hc_y` to feet coordinates (home plate at origin).
+Statcast の `hc_x`/`hc_y`（画面ピクセル座標）を野球場の実距離座標（フィート、ホームベース原点）に変換します。
 
 ```python
 from baseball_field_viz import transform_coords
 
 df_t = transform_coords(df)
-# Adds 'x' and 'y' columns in feet
-# x = 2.5 * (hc_x - 125.42)
-# y = 2.5 * (198.27 - hc_y)
+# 'x', 'y' 列（フィート単位）を追加
+# x = 2.5 * (hc_x - 125.42)   ← 左右方向（右 = プラス）
+# y = 2.5 * (198.27 - hc_y)   ← 前後方向（外野 = プラス）
 ```
 
 ### `draw_field(ax, foul_distance=330, outfield_distance=340)`
@@ -95,7 +95,7 @@ df_raw = statcast(start_dt="2025-03-01", end_dt="2025-10-31")
 con = duckdb.connect()
 df = con.execute("""
     SELECT * FROM df_raw
-    WHERE batter = 660271
+    WHERE batter = 660271  -- mlbam_id (例: Shohei Ohtani = 660271)
       AND hc_x IS NOT NULL AND hc_y IS NOT NULL
       AND game_type = 'R'
 """).df()
@@ -145,7 +145,7 @@ from pybaseball import statcast
 from baseball_field_viz import pitch_zone_chart
 
 df = statcast(start_dt="2025-03-01", end_dt="2025-10-31")
-df_pitcher = df[df["pitcher"] == 592789]  # e.g. Yoshinobu Yamamoto
+df_pitcher = df[df["pitcher"] == 592789]  # mlbam_id: Yoshinobu Yamamoto
 
 fig, ax = plt.subplots(figsize=(6, 6))
 pitch_zone_chart(ax, df_pitcher, color_by="pitch_type", title="Yamamoto 2025 - Pitch Locations")
