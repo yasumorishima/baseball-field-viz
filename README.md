@@ -39,15 +39,15 @@ plt.show()
 
 ### `transform_coords(df)`
 
-Statcast の `hc_x`/`hc_y`（画面ピクセル座標）を野球場の実距離座標（フィート、ホームベース原点）に変換します。
+Converts Statcast `hc_x`/`hc_y` (screen pixel coordinates) to real field coordinates in feet (home plate as origin).
 
 ```python
 from baseball_field_viz import transform_coords
 
 df_t = transform_coords(df)
-# 'x', 'y' 列（フィート単位）を追加
-# x = 2.5 * (hc_x - 125.42)   ← 左右方向（右 = プラス）
-# y = 2.5 * (198.27 - hc_y)   ← 前後方向（外野 = プラス）
+# Adds 'x', 'y' columns (feet)
+# x = 2.5 * (hc_x - 125.42)   ← left/right (positive = right)
+# y = 2.5 * (198.27 - hc_y)   ← depth (positive = outfield)
 ```
 
 ### `draw_field(ax, foul_distance=330, outfield_distance=340)`
@@ -95,7 +95,7 @@ df_raw = statcast(start_dt="2025-03-01", end_dt="2025-10-31")
 con = duckdb.connect()
 df = con.execute("""
     SELECT * FROM df_raw
-    WHERE batter = 660271  -- mlbam_id (例: Shohei Ohtani = 660271)
+    WHERE batter = 660271  -- mlbam_id (e.g. Shohei Ohtani = 660271)
       AND hc_x IS NOT NULL AND hc_y IS NOT NULL
       AND game_type = 'R'
 """).df()
