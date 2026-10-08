@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "baseball-field-viz"
-version = "0.2.4"
+version = "0.2.5"
 description = "Matplotlib baseball field drawing and Statcast spray chart for MLB analysis"
 readme = "README.md"
 license = "MIT"
@@ -23,6 +23,8 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Visualization",
 ]
 dependencies = [
